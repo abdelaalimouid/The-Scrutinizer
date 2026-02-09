@@ -241,12 +241,14 @@ config = types.GenerateContentConfig(
 
 ## Extensibility Ideas
 
-If you want to take this beyond the hackathon:
+If you want to take this to the next level:
 
 - **Case Export**: Add export to JSON/Markdown for integration with ticketing systems.
 - **User Accounts & Case History**: Store prior analyses for patterns over time.
 - **Team Notes**: Allow analysts to annotate and save manual observations alongside model output.
 - **Policy Templates**: Predefined checklists for sectors (finance, HR, support) that tailor risk labels.
+
+Feel free to open issues or PRs if you’d like to extend the app.
 
 ---
 
