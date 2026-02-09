@@ -52,22 +52,22 @@ The app is designed for **hackathon judges, security researchers, and investigat
 flowchart TD
   U[User Browser] -->|API Key + Inputs| S[Streamlit App]
 
-  subgraph Frontend (Streamlit)
-    S --> SB[Sidebar\nGemini API Key + Tips]
-    S --> T1[Tab 1\nVideo / Image / Audio Analysis]
-    S --> T2[Tab 2\nLink / Text Analysis]
-    S --> UI[Results UI\nScore, Timeline, Math, Thoughts]
+  subgraph Frontend_Streamlit
+    S --> SB["Sidebar - Gemini API Key + Tips"]
+    S --> T1["Tab 1 - Media Analysis"]
+    S --> T2["Tab 2 - Link / Text Analysis"]
+    S --> UI["Results UI - Score, Timeline, Math, Thoughts"]
   end
 
-  subgraph Backend (Python)
-    S --> CFG[Build GenerateContentConfig\n(system, tools, thinking)]
-    S --> CNT[Build Contents\n(text + media + links)]
-    CFG --> GEM[google.genai.Client\nGemini 3 Pro Preview]
+  subgraph Backend_Python
+    S --> CFG["Build GenerateContentConfig (system, tools, thinking)"]
+    S --> CNT["Build Contents (text + media + links)"]
+    CFG --> GEM["google.genai.Client - Gemini 3 Pro Preview"]
     CNT --> GEM
-    GEM --> RES[Response\nJSON + Thoughts]
+    GEM --> RES["Response - JSON + Thoughts"]
   end
 
-  RES --> PARSE[Parse / Normalize\nJSON + Thoughts]
+  RES --> PARSE["Parse / Normalize (JSON + Thoughts)"]
   PARSE --> UI
 ```
 
@@ -110,16 +110,16 @@ sequenceDiagram
 ### 1. Clone the repository
 
 ```bash
-git clone <YOUR_REPO_URL> gemini-hackathon
-cd gemini-hackathon
+https://github.com/abdelaalimouid/The-Scrutinizer.git
+cd The-Scrutinizer
 ```
 
 ### 2. (Recommended) Create and activate virtual environment
 
 ```bash
-python -m venv gem-hack
-source gem-hack/bin/activate  # macOS / Linux
-# On Windows: .\gem-hack\Scripts\activate
+python -m venv venv
+source venv/bin/activate  # macOS / Linux
+# On Windows: .\venv\Scripts\activate
 ```
 
 ### 3. Install dependencies
