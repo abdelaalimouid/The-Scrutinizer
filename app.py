@@ -261,7 +261,7 @@ def render_analysis_output(result: Dict[str, Any]) -> None:
     render_deception_score(deception_score, risk_level)
 
     if thoughts_md:
-        with st.expander("🕵️ Forensic Reasoning (Thinking Process)"):
+        with st.expander("🕵️ Forensic Reasoning (Thinking Process)", expanded=True):
             st.markdown(thoughts_md)
 
     if summary:
@@ -493,7 +493,7 @@ h1, h2, h3 {
                         contents,
                         include_code_execution=False,
                     )
-                    status.update(label="✅ Investigation Complete!", state="complete", expanded=False)
+                    status.update(label="✅ Investigation Complete!", state="complete", expanded=True)
 
                     if isinstance(result, dict):
                         render_analysis_output(result)
@@ -557,7 +557,7 @@ h1, h2, h3 {
                         contents,
                         include_code_execution=True,
                     )
-                    status.update(label="✅ Investigation Complete!", state="complete", expanded=False)
+                    status.update(label="✅ Investigation Complete!", state="complete", expanded=True)
 
                     if isinstance(result, dict):
                         render_analysis_output(result)
