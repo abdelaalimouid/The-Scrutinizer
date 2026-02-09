@@ -34,6 +34,9 @@ def build_system_prompt() -> str:
         "Avoid duplicated digits, broken words like '1,000investmentturninginto', weird spacing, "
         "or LaTeX-style formulas. Write one clean sentence instead. Prefer a short markdown table "
         "over complex notation.\n"
+        "- When multiple media files, links, or text snippets are provided, ALWAYS consider "
+        "and reference **all** of them in your analysis. Do not focus only on the first item; "
+        "your deception score and summary must reflect the entire batch.\n"
         "Output format requirements:\n"
         "- Always respond as JSON only (no free‑form text outside JSON).\n"
         "- Always include an integer field 'deception_score' (0–100).\n"
@@ -422,6 +425,23 @@ h1, h2, h3 {
             ],
             accept_multiple_files=True,
         )
+
+        # Inline media previews so users can see what is being analyzed.
+        if uploads:
+            st.markdown("#### Media Preview")
+            for uploaded in uploads:
+                filetype = (uploaded.type or "").lower()
+                filename = uploaded.name
+                st.caption(f"**{filename}**")
+                if filetype.startswith("video"):
+                    st.video(uploaded)
+                elif filetype.startswith("image"):
+                    st.image(uploaded)
+                elif filetype.startswith("audio"):
+                    st.audio(uploaded)
+                else:
+                    st.write("Unsupported preview type; will still be analyzed.")
+
         context_notes = st.text_area(
             "Context (optional)",
             placeholder="Describe where this clip came from, how it was sent to you, and why it feels suspicious.",
@@ -445,9 +465,11 @@ h1, h2, h3 {
                 client = get_client(api_key)
 
                 media_inputs: List[Any] = []
-                for uploaded in uploads:
+                media_labels: List[str] = []
+                for idx, uploaded in enumerate(uploads):
                     uploaded.seek(0)
                     guessed_mime, _ = mimetypes.guess_type(uploaded.name)
+                    media_labels.append(f"Media {idx + 1}: {uploaded.name}")
                     # If we can guess a sane media MIME type from the filename, use the Files API.
                     if guessed_mime:
                         try:
@@ -472,8 +494,11 @@ h1, h2, h3 {
 
                 prompt = (
                     "You are analyzing potentially deceptive media (video, images, and/or audio files).\n"
-                    "Use all provided media assets together with the optional context notes to detect scams, "
-                    "fraud, or deepfake‑like behavior.\n"
+                    "Below is a numbered list of the media assets provided in this batch:\n"
+                    f"{chr(10).join(media_labels)}\n\n"
+                    "Use **all** of these media assets together with the optional context notes to detect scams, "
+                    "fraud, or deepfake‑like behavior. If different assets show different risk levels, explain that "
+                    "clearly and base the overall deception score on the **worst** (most dangerous) case.\n"
                     "Pay close attention to:\n"
                     "- voice consistency, unnatural edits, and lip‑sync issues\n"
                     "- visual or stylistic artifacts that suggest manipulation\n"
