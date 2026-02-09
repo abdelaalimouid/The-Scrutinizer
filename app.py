@@ -434,73 +434,76 @@ h1, h2, h3 {
             elif not uploads:
                 st.error("Please upload at least one media file to analyze.")
             else:
-                with st.status("🕵️ Investigation in Progress...", expanded=True) as status:
+                status_box = st.container()
+                with status_box:
+                    st.markdown("🕵️ **Investigation in Progress...**")
                     msg_placeholder = st.empty()
                     for _ in range(3):
                         msg_placeholder.write(random.choice(FORENSIC_MESSAGES))
                         time.sleep(1.5)
 
-                    client = get_client(api_key)
+                client = get_client(api_key)
 
-                    media_inputs: List[Any] = []
-                    for uploaded in uploads:
-                        uploaded.seek(0)
-                        guessed_mime, _ = mimetypes.guess_type(uploaded.name)
-                        # If we can guess a sane media MIME type from the filename, use the Files API.
-                        if guessed_mime:
-                            try:
-                                file_ref = client.files.upload(file=uploaded)
-                                media_inputs.append(file_ref)
-                                continue
-                            except Exception:
-                                # Non‑fatal: fall back to direct bytes ingestion.
-                                uploaded.seek(0)
-                                data = uploaded.read()
-                                media_inputs.append(
-                                    types.Part.from_bytes(data=data, mime_type=guessed_mime)
-                                )
-                        else:
-                            # If we really can't determine a MIME type, bypass Files API entirely.
+                media_inputs: List[Any] = []
+                for uploaded in uploads:
+                    uploaded.seek(0)
+                    guessed_mime, _ = mimetypes.guess_type(uploaded.name)
+                    # If we can guess a sane media MIME type from the filename, use the Files API.
+                    if guessed_mime:
+                        try:
+                            file_ref = client.files.upload(file=uploaded)
+                            media_inputs.append(file_ref)
+                            continue
+                        except Exception:
+                            # Non‑fatal: fall back to direct bytes ingestion.
                             uploaded.seek(0)
                             data = uploaded.read()
-                            mime_type = uploaded.type or "application/octet-stream"
                             media_inputs.append(
-                                types.Part.from_bytes(data=data, mime_type=mime_type)
+                                types.Part.from_bytes(data=data, mime_type=guessed_mime)
                             )
-
-                    prompt = (
-                        "You are analyzing potentially deceptive media (video, images, and/or audio files).\n"
-                        "Use all provided media assets together with the optional context notes to detect scams, "
-                        "fraud, or deepfake‑like behavior.\n"
-                        "Pay close attention to:\n"
-                        "- voice consistency, unnatural edits, and lip‑sync issues\n"
-                        "- visual or stylistic artifacts that suggest manipulation\n"
-                        "- pressure tactics, urgency, or emotional manipulation\n"
-                        "- financial promises, crypto or investment schemes\n"
-                        "- identity claims, credentials, or impersonation cues\n"
-                        "Return a single structured JSON analysis that reflects the entire batch of media."
-                    )
-
-                    contents: List[Any] = [prompt]
-                    if context_notes.strip():
-                        contents.append(
-                            f"Additional human context from the victim:\n{context_notes.strip()}"
-                        )
-                    contents.extend(media_inputs)
-
-                    # For media analysis we keep Google Search + thinking, but
-                    # skip code_execution to avoid MIME restrictions in that tool.
-                    result = run_gemini_analysis(
-                        api_key,
-                        contents,
-                        include_code_execution=False,
-                    )
-                    status.update(label="✅ Investigation Complete!", state="complete", expanded=True)
-
-                    if isinstance(result, dict):
-                        render_analysis_output(result)
                     else:
-                        st.error("Unexpected response format from Gemini.")
+                        # If we really can't determine a MIME type, bypass Files API entirely.
+                        uploaded.seek(0)
+                        data = uploaded.read()
+                        mime_type = uploaded.type or "application/octet-stream"
+                        media_inputs.append(
+                            types.Part.from_bytes(data=data, mime_type=mime_type)
+                        )
+
+                prompt = (
+                    "You are analyzing potentially deceptive media (video, images, and/or audio files).\n"
+                    "Use all provided media assets together with the optional context notes to detect scams, "
+                    "fraud, or deepfake‑like behavior.\n"
+                    "Pay close attention to:\n"
+                    "- voice consistency, unnatural edits, and lip‑sync issues\n"
+                    "- visual or stylistic artifacts that suggest manipulation\n"
+                    "- pressure tactics, urgency, or emotional manipulation\n"
+                    "- financial promises, crypto or investment schemes\n"
+                    "- identity claims, credentials, or impersonation cues\n"
+                    "Return a single structured JSON analysis that reflects the entire batch of media."
+                )
+
+                contents: List[Any] = [prompt]
+                if context_notes.strip():
+                    contents.append(
+                        f"Additional human context from the victim:\n{context_notes.strip()}"
+                    )
+                contents.extend(media_inputs)
+
+                # For media analysis we keep Google Search + thinking, but
+                # skip code_execution to avoid MIME restrictions in that tool.
+                result = run_gemini_analysis(
+                    api_key,
+                    contents,
+                    include_code_execution=False,
+                )
+
+                st.success("✅ Investigation Complete!")
+
+                if isinstance(result, dict):
+                    render_analysis_output(result)
+                else:
+                    st.error("Unexpected response format from Gemini.")
 
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -525,46 +528,49 @@ h1, h2, h3 {
             elif not suspicious_link.strip() and not suspicious_text.strip():
                 st.error("Please provide at least a link or some text to analyze.")
             else:
-                with st.status("🕵️ Investigation in Progress...", expanded=True) as status:
+                status_box = st.container()
+                with status_box:
+                    st.markdown("🕵️ **Investigation in Progress...**")
                     msg_placeholder = st.empty()
                     for _ in range(3):
                         msg_placeholder.write(random.choice(FORENSIC_MESSAGES))
                         time.sleep(1.5)
 
-                    description_lines = [
-                        "You are analyzing potentially deceptive online content (link and/or text).",
-                        "Investigate for:",
-                        "- phishing, account takeover, credential harvesting",
-                        "- fake technical support or refund scams",
-                        "- crypto / investment fraud and Ponzi patterns",
-                        "- romance scams, giveaway scams, and deepfake‑assisted grifts",
-                        "Cross‑check key claims with web search where useful.",
-                        "Return a structured JSON analysis that matches the configured schema.",
-                    ]
-                    base_prompt = "\n".join(description_lines)
+                description_lines = [
+                    "You are analyzing potentially deceptive online content (link and/or text).",
+                    "Investigate for:",
+                    "- phishing, account takeover, credential harvesting",
+                    "- fake technical support or refund scams",
+                    "- crypto / investment fraud and Ponzi patterns",
+                    "- romance scams, giveaway scams, and deepfake‑assisted grifts",
+                    "Cross‑check key claims with web search where useful.",
+                    "Return a structured JSON analysis that matches the configured schema.",
+                ]
+                base_prompt = "\n".join(description_lines)
 
-                    text_block = suspicious_text.strip() or ""
-                    link_block = suspicious_link.strip() or ""
+                text_block = suspicious_text.strip() or ""
+                link_block = suspicious_link.strip() or ""
 
-                    user_payload = "User‑provided artifacts:\n"
-                    if link_block:
-                        user_payload += f"- Link: {link_block}\n"
-                    if text_block:
-                        user_payload += f"- Text snippet:\n{text_block}\n"
+                user_payload = "User‑provided artifacts:\n"
+                if link_block:
+                    user_payload += f"- Link: {link_block}\n"
+                if text_block:
+                    user_payload += f"- Text snippet:\n{text_block}\n"
 
-                    contents = [base_prompt, user_payload]
-                    # For text / link analysis we enable both Google Search and code_execution.
-                    result = run_gemini_analysis(
-                        api_key,
-                        contents,
-                        include_code_execution=True,
-                    )
-                    status.update(label="✅ Investigation Complete!", state="complete", expanded=True)
+                contents = [base_prompt, user_payload]
+                # For text / link analysis we enable both Google Search and code_execution.
+                result = run_gemini_analysis(
+                    api_key,
+                    contents,
+                    include_code_execution=True,
+                )
 
-                    if isinstance(result, dict):
-                        render_analysis_output(result)
-                    else:
-                        st.error("Unexpected response format from Gemini.")
+                st.success("✅ Investigation Complete!")
+
+                if isinstance(result, dict):
+                    render_analysis_output(result)
+                else:
+                    st.error("Unexpected response format from Gemini.")
 
         st.markdown("</div>", unsafe_allow_html=True)
 
