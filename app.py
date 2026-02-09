@@ -429,18 +429,21 @@ h1, h2, h3 {
         # Inline media previews so users can see what is being analyzed.
         if uploads:
             st.markdown("#### Media Preview")
-            for uploaded in uploads:
+            cols = st.columns(2)
+            for idx, uploaded in enumerate(uploads):
                 filetype = (uploaded.type or "").lower()
                 filename = uploaded.name
-                st.caption(f"**{filename}**")
-                if filetype.startswith("video"):
-                    st.video(uploaded)
-                elif filetype.startswith("image"):
-                    st.image(uploaded)
-                elif filetype.startswith("audio"):
-                    st.audio(uploaded)
-                else:
-                    st.write("Unsupported preview type; will still be analyzed.")
+                col = cols[idx % 2]
+                with col:
+                    st.caption(f"**{filename}**")
+                    if filetype.startswith("video"):
+                        st.video(uploaded)
+                    elif filetype.startswith("image"):
+                        st.image(uploaded, use_column_width=True)
+                    elif filetype.startswith("audio"):
+                        st.audio(uploaded)
+                    else:
+                        st.write("Unsupported preview type; will still be analyzed.")
 
         context_notes = st.text_area(
             "Context (optional)",
